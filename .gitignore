@@ -1,1 +1,5 @@
 shoppinglist
+tf_generated
+terraform.tfstate*
+.terraform
+.idea
