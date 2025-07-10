@@ -21,6 +21,7 @@ func NewShoppingListService(repo *ShoppingListEntityRepository) ShoppingListServ
 
 var _ StrictServerInterface = (*ShoppingListService)(nil)
 
+// Get all shopping lists
 func (service ShoppingListService) GetShoppingLists(ctx context.Context, request GetShoppingListsRequestObject) (GetShoppingListsResponseObject, error) {
 	shoppingListEntities, err := service.repo.GetShoppingLists(ctx)
 	if err != nil {
@@ -36,6 +37,7 @@ func (service ShoppingListService) GetShoppingLists(ctx context.Context, request
 	return shoppingLists, nil
 }
 
+// Create a new shopping list
 func (service ShoppingListService) CreateShoppingList(ctx context.Context, request CreateShoppingListRequestObject) (CreateShoppingListResponseObject, error) {
 	entity, err := service.repo.CreateShoppingListEntity(ctx, request.Body.Name)
 	if err != nil {
@@ -45,6 +47,7 @@ func (service ShoppingListService) CreateShoppingList(ctx context.Context, reque
 	return CreateShoppingList201JSONResponse(*getShoppingListModelFromEntity(entity)), nil
 }
 
+// Delete an existing shopping list
 func (service ShoppingListService) DeleteShoppingList(ctx context.Context, request DeleteShoppingListRequestObject) (DeleteShoppingListResponseObject, error) {
 	err := service.repo.DeleteShoppingListEntity(ctx, request.ListId)
 	if err != nil {
@@ -54,6 +57,7 @@ func (service ShoppingListService) DeleteShoppingList(ctx context.Context, reque
 	return DeleteShoppingList204Response{}, nil
 }
 
+// Add a grocery item to a shopping list
 func (service ShoppingListService) AddGroceryItem(ctx context.Context, request AddGroceryItemRequestObject) (AddGroceryItemResponseObject, error) {
 	entity, err := service.repo.CreateGroceryItemEntity(ctx, request.ListId, request.Body.Name, request.Body.Quantity)
 	if err != nil {
@@ -63,6 +67,7 @@ func (service ShoppingListService) AddGroceryItem(ctx context.Context, request A
 	return AddGroceryItem201JSONResponse(*getGroceryModelFromEntity(entity)), nil
 }
 
+// Update grocery item belonging to a shopping list
 func (service ShoppingListService) UpdateGroceryItem(ctx context.Context, request UpdateGroceryItemRequestObject) (UpdateGroceryItemResponseObject, error) {
 	entity, err := service.repo.UpdateGroceryItemEntity(ctx, request.ItemId, request.ListId, *request.Body.Name, *request.Body.Quantity, request.Body.Version)
 	if err != nil {
@@ -78,6 +83,7 @@ func (service ShoppingListService) UpdateGroceryItem(ctx context.Context, reques
 	return UpdateGroceryItem200JSONResponse(*getGroceryModelFromEntity(entity)), nil
 }
 
+// Set the "completed" flag on a shopping list item
 func (service ShoppingListService) ToggleGroceryItem(ctx context.Context, request ToggleGroceryItemRequestObject) (ToggleGroceryItemResponseObject, error) {
 	entity, err := service.repo.ToggleGroceryItemEntity(ctx, request.ItemId, request.ListId, request.Body.Version)
 	if err != nil {

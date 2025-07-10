@@ -50,18 +50,16 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "lambda_zip_file" {
-  description = "Path to Lambda deployment package"
-  type        = string
-  default     = "lambda.zip"
+variable "static_token" {
+  description = "Static token"
+  type = string
+  sensitive = true
 }
 
 # Data sources
 data "aws_availability_zones" "available" {
   state = "available"
 }
-
-data "aws_caller_identity" "current" {}
 
 # Random password for RDS (if not provided)
 resource "random_password" "db_password" {
@@ -72,6 +70,7 @@ resource "random_password" "db_password" {
 
 locals {
     db_password = var.db_password != null ? var.db_password : random_password.db_password[0].result
+    static_token = var.static_token != null ? var.static_token : "static_token"
     function_name = "bootstrap"
     src_path      = "${path.module}/"
 
@@ -92,7 +91,7 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-vpc"
+    Name = "${var.project_name}-vpc"
   }
 }
 
@@ -101,7 +100,7 @@ resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-igw"
+    Name = "${var.project_name}-igw"
   }
 }
 
@@ -115,7 +114,7 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-public-subnet-${count.index + 1}"
+    Name = "${var.project_name}-public-subnet-${count.index + 1}"
   }
 }
 
@@ -127,7 +126,7 @@ resource "aws_subnet" "private" {
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-private-subnet-${count.index + 1}"
+    Name = "${var.project_name}-private-subnet-${count.index + 1}"
   }
 }
 
@@ -141,7 +140,7 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-public-rt"
+    Name = "${var.project_name}-public-rt"
   }
 }
 
@@ -156,7 +155,7 @@ resource "aws_eip" "nat" {
   domain = "vpc"
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-nat-eip"
+    Name = "${var.project_name}-nat-eip"
   }
 }
 
@@ -165,7 +164,7 @@ resource "aws_nat_gateway" "main" {
   subnet_id     = aws_subnet.public[0].id
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-nat-gw"
+    Name = "${var.project_name}-nat-gw"
   }
 
   depends_on = [aws_internet_gateway.main]
@@ -180,7 +179,7 @@ resource "aws_route_table" "private" {
   }
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-private-rt"
+    Name = "${var.project_name}-private-rt"
   }
 }
 
@@ -192,7 +191,7 @@ resource "aws_route_table_association" "private" {
 
 # Security Group for RDS
 resource "aws_security_group" "rds" {
-  name        = "${var.project_name}-${var.environment}-rds-sg"
+  name        = "${var.project_name}-rds-sg"
   description = "Security group for RDS PostgreSQL"
   vpc_id      = aws_vpc.main.id
 
@@ -211,12 +210,12 @@ resource "aws_security_group" "rds" {
   }
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-rds-sg"
+    Name = "${var.project_name}-rds-sg"
   }
 }
 
 resource "aws_security_group" "lambda" {
-  name        = "${var.project_name}-${var.environment}-lambda-sg"
+  name        = "${var.project_name}-lambda-sg"
   description = "Security group for Lambda function"
   vpc_id      = aws_vpc.main.id
 
@@ -228,7 +227,7 @@ resource "aws_security_group" "lambda" {
   }
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-lambda-sg"
+    Name = "${var.project_name}-lambda-sg"
   }
 }
 
@@ -237,7 +236,7 @@ resource "aws_db_subnet_group" "main" {
   subnet_ids = aws_subnet.private[*].id
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-db-subnet-group"
+    Name = "${var.project_name}-db-subnet-group"
   }
 }
 
@@ -268,12 +267,12 @@ resource "aws_db_instance" "postgres" {
   deletion_protection = false
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-postgres"
+    Name = "${var.project_name}-postgres"
   }
 }
 
 resource "aws_iam_role" "lambda_role" {
-  name = "${var.project_name}-${var.environment}-lambda-role"
+  name = "${var.project_name}-lambda-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -290,7 +289,7 @@ resource "aws_iam_role" "lambda_role" {
 }
 
 resource "aws_iam_role_policy" "lambda_policy" {
-  name = "${var.project_name}-${var.environment}-lambda-policy"
+  name = "${var.project_name}-lambda-policy"
   role = aws_iam_role.lambda_role.id
 
   policy = jsonencode({
@@ -333,7 +332,7 @@ data "archive_file" "function_archive" {
 }
 
 resource "aws_lambda_function" "api" {
-  function_name    = "${var.project_name}-${var.environment}-api"
+  function_name    = "${var.project_name}-api"
   role            = aws_iam_role.lambda_role.arn
   handler          = local.binary_name
   runtime         = "provided.al2"
@@ -356,6 +355,7 @@ resource "aws_lambda_function" "api" {
       DB_NAME     = aws_db_instance.postgres.db_name
       DB_USER     = aws_db_instance.postgres.username
       DB_PASSWORD = local.db_password
+      API_KEY = local.static_token
       DB_URL      = "postgres://${aws_db_instance.postgres.username}:${local.db_password}@${aws_db_instance.postgres.endpoint}/${aws_db_instance.postgres.db_name}?sslmode=require"
     }
   }
@@ -363,7 +363,7 @@ resource "aws_lambda_function" "api" {
   depends_on = [aws_db_instance.postgres, null_resource.function_binary]
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-api"
+    Name = "${var.project_name}-api"
   }
 }
 
@@ -378,7 +378,7 @@ resource "aws_lambda_permission" "api_gateway" {
 
 # API Gateway
 resource "aws_api_gateway_rest_api" "api" {
-  name        = "${var.project_name}-${var.environment}-api"
+  name        = "${var.project_name}-api"
   description = "API Gateway for ${var.project_name}"
 
   endpoint_configuration {
@@ -463,7 +463,7 @@ resource "aws_api_gateway_stage" "api" {
   stage_name    = var.environment
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-stage"
+    Name = "${var.project_name}-stage"
   }
 }
 

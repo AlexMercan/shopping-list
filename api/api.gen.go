@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	BearerAuthScopes = "BearerAuth.Scopes"
+	ApiKeyAuthScopes = "ApiKeyAuth.Scopes"
 )
 
 // ConflictError defines model for ConflictError.
@@ -27,9 +27,6 @@ type ConflictError struct {
 
 	// Error Error code
 	Error string `json:"error"`
-
-	// LastModified When the resource was last modified
-	LastModified *time.Time `json:"lastModified,omitempty"`
 
 	// Message Human-readable error message
 	Message string `json:"message"`
@@ -191,7 +188,7 @@ func (siw *ServerInterfaceWrapper) GetShoppingLists(w http.ResponseWriter, r *ht
 
 	ctx := r.Context()
 
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+	ctx = context.WithValue(ctx, ApiKeyAuthScopes, []string{})
 
 	r = r.WithContext(ctx)
 
@@ -211,7 +208,7 @@ func (siw *ServerInterfaceWrapper) CreateShoppingList(w http.ResponseWriter, r *
 
 	ctx := r.Context()
 
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+	ctx = context.WithValue(ctx, ApiKeyAuthScopes, []string{})
 
 	r = r.WithContext(ctx)
 
@@ -242,7 +239,7 @@ func (siw *ServerInterfaceWrapper) DeleteShoppingList(w http.ResponseWriter, r *
 
 	ctx := r.Context()
 
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+	ctx = context.WithValue(ctx, ApiKeyAuthScopes, []string{})
 
 	r = r.WithContext(ctx)
 
@@ -273,7 +270,7 @@ func (siw *ServerInterfaceWrapper) AddGroceryItem(w http.ResponseWriter, r *http
 
 	ctx := r.Context()
 
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+	ctx = context.WithValue(ctx, ApiKeyAuthScopes, []string{})
 
 	r = r.WithContext(ctx)
 
@@ -313,7 +310,7 @@ func (siw *ServerInterfaceWrapper) UpdateGroceryItem(w http.ResponseWriter, r *h
 
 	ctx := r.Context()
 
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+	ctx = context.WithValue(ctx, ApiKeyAuthScopes, []string{})
 
 	r = r.WithContext(ctx)
 
@@ -353,7 +350,7 @@ func (siw *ServerInterfaceWrapper) ToggleGroceryItem(w http.ResponseWriter, r *h
 
 	ctx := r.Context()
 
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+	ctx = context.WithValue(ctx, ApiKeyAuthScopes, []string{})
 
 	r = r.WithContext(ctx)
 

@@ -194,7 +194,6 @@ func (r *ShoppingListRepository) GetShoppingLists(ctx context.Context) ([]*Shopp
 		return nil, fmt.Errorf("error iterating shopping lists: %w", err)
 	}
 
-	// Convert map to ordered slice
 	var lists []*ShoppingListEntity
 	for _, listID := range orderedListIDs {
 		lists = append(lists, listsMap[listID])

@@ -46,12 +46,16 @@ func init() {
 
 	runDbMigrations(migrationUrl, databaseUrl)
 
+	apiKey := os.Getenv("API_KEY")
+	authService := api.NewAuthService(apiKey)
+
 	var repo api.ShoppingListEntityRepository = api.NewShoppingListRepository(dbpool)
 	service := api.NewShoppingListService(&repo)
 	strictHandler := api.NewStrictHandler(service, nil)
+
 	mux := http.NewServeMux()
 
-	apiHandler = api.HandlerFromMux(strictHandler, mux)
+	apiHandler = authService.AuthMiddleware(api.HandlerFromMux(strictHandler, mux))
 }
 
 func main() {

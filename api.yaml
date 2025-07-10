@@ -3,9 +3,6 @@ info:
   title: Shopping List API
   description: RESTful backend service for managing shopping lists and grocery items
   version: 1.0.0
-  contact:
-    name: API Support
-    email: support@shoppinglist.com
 
 paths:
   /shopping-lists:
@@ -28,7 +25,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
-
     post:
       summary: Create a new shopping list
       description: Create a new shopping list for the authenticated user
@@ -54,7 +50,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /shopping-lists/{listId}:
     delete:
       summary: Delete a shopping list
@@ -73,7 +68,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /shopping-lists/{listId}/items:
     post:
       summary: Add an item to a shopping list
@@ -137,7 +131,6 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /shopping-lists/{listId}/items/{itemId}/toggle:
     patch:
       summary: Toggle item completion status
@@ -188,14 +181,8 @@ components:
           description: Unique identifier for the shopping list
         name:
           type: string
-          maxLength: 255
           description: Name of the shopping list
           example: "Weekly Groceries"
-        description:
-          type: string
-          maxLength: 1000
-          description: Optional description of the shopping list
-          example: "Groceries for the week of March 15th"
         createdAt:
           type: string
           format: date-time
@@ -217,8 +204,6 @@ components:
         - name
         - quantity
         - completed
-        - createdAt
-        - updatedAt
         - version
       properties:
         id:
@@ -234,7 +219,7 @@ components:
           type: integer
           format: int32
           description: Quantity of the item
-          example: 2.5
+          example: 2
         completed:
           type: boolean
           description: Whether the item has been ticked off
@@ -244,7 +229,6 @@ components:
           format: int64
           description: Version number for optimistic locking
           example: 1
-
     CreateShoppingListRequest:
       type: object
       required:
@@ -255,23 +239,6 @@ components:
           maxLength: 255
           description: Name of the shopping list
           example: "Weekly Groceries"
-
-    UpdateShoppingListRequest:
-      type: object
-      required:
-        - version
-      properties:
-        name:
-          type: string
-          maxLength: 255
-          description: Updated name of the shopping list
-          example: "Weekly Groceries - Updated"
-        version:
-          type: integer
-          format: int64
-          description: Current version for optimistic locking
-          example: 1
-
     CreateGroceryItemRequest:
       type: object
       required:
@@ -287,7 +254,6 @@ components:
           type: integer
           format: int32
           description: Quantity of the item
-
     UpdateGroceryItemRequest:
       type: object
       required:
@@ -307,7 +273,6 @@ components:
           format: int64
           description: Current version for optimistic locking
           example: 1
-
     ToggleGroceryItemRequest:
       type: object
       required:
@@ -346,7 +311,6 @@ components:
                 type: string
                 description: Field-specific error message
                 example: "Name is required"
-
     ConflictError:
       type: object
       required:
@@ -367,7 +331,6 @@ components:
           format: int64
           description: Current version of the resource
           example: 3
-
   parameters:
     ListId:
       name: listId
@@ -422,14 +385,13 @@ components:
             $ref: '#/components/schemas/Error'
 
   securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT token for authentication
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
 
 security:
-  - BearerAuth: []
+  - ApiKeyAuth: []
 
 tags:
   - name: Shopping Lists
